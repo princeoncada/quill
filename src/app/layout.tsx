@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import Navbar from "@/components/Navbar";
+import Providers from "@/components/Providers";
+import { Toaster } from "@/components/ui/sonner";
+
+import "react-loading-skeleton/dist/skeleton.css";
+import "simplebar-react/dist/simplebar.min.css"
+
+import { OctagonX } from "lucide-react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,9 +34,28 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="light"
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <Providers>
+        <body className={cn("min-h-screen font-sans antialiased grainy", geistSans.className)}>
+          <Toaster
+            icons={{
+              error: <OctagonX className="text-red-900 h-4 w-"/>,
+            }}
+            toastOptions={{
+              style: {
+                background: '#ffe2e0',
+                border: '#ffe2e0'
+              },
+              classNames: {
+                title: '!text-red-900',
+                description: '!text-red-900',
+              },
+            }} />
+          <Navbar />
+          {children}
+        </body>
+      </Providers>
     </html>
   );
 }
