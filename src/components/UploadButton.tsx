@@ -8,7 +8,7 @@ import { toast } from "sonner"
 
 import DropZone from "react-dropzone"
 import { Cloud, File, Loader2 } from "lucide-react"
-import { useUploadThing } from "@/app/api/uploadthing/uploadthing"
+import { useUploadThing } from "@/lib/uploadthing"
 import { trpc } from "@/app/_trpc/client"
 import { useRouter } from "next/navigation"
 
