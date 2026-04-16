@@ -8,7 +8,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import UpgradeButton from "@/components/UpgradeButton";
 
-const page = async () => {
+const Page = async () => {
   const { getUser } = getKindeServerSession();
   const user = await getUser();
 
@@ -185,4 +185,4 @@ const page = async () => {
   );
 };
 
-export default page;
+export default Page;

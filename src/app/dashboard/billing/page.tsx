@@ -1,7 +1,7 @@
 import BillingForm from "@/components/BillingForm";
 import { getUserSubscriptionPlan } from "@/lib/stripe";
 
-const page = async () => {
+const Page = async () => {
   const subscriptionPlan = await getUserSubscriptionPlan()
 
   return (
@@ -9,4 +9,4 @@ const page = async () => {
   )
 }
 
-export default page
+export default Page
