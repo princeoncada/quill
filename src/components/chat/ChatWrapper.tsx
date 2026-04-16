@@ -6,6 +6,7 @@ import Messages from "./Messages";
 import { ChevronLeft, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "../ui/button";
+import { ChatContextProvider } from "./ChatContext";
 
 interface ChatWrapperProps {
   fileId: string;
@@ -16,12 +17,10 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
     fileId,
   },
     {
-      refetchInterval: (data) => {
-        let currStatus = null;
-        data.promise?.then((s) => {
-          currStatus = s.status;
-        });
-        currStatus === 'SUCCESS' || currStatus === "FAILED" ? false : 500;
+      refetchInterval: (query) => {
+        const status = query.state.data?.status;
+        const done = status === 'SUCCESS' || status === 'FAILED';
+        return done ? false : 500;
       }
     }
   );
@@ -70,7 +69,7 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
               variant: "secondary",
               className: "mt-4",
               size: "lg"
-            })}><ChevronLeft className="h-3 w-3 mr-1.5"/>Back</Link>
+            })}><ChevronLeft className="h-3 w-3 mr-1.5" />Back</Link>
           </div>
         </div>
 
@@ -79,13 +78,15 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
     );
 
   return (
-    <div className="relative min-h-full bg-zinc-50 flex divide-y divide-zinc-200 flex-col justify-between">
-      <div className="flex-1 justify-between flex flex-col mb-28">
-        <Messages />
-      </div>
+    <ChatContextProvider fileId={fileId}>
+      <div className="relative min-h-full bg-zinc-50 flex divide-y divide-zinc-200 flex-col justify-between">
+        <div className="flex-1 justify-between flex flex-col mb-28">
+          <Messages fileId={fileId} />
+        </div>
 
-      <ChatInput />
-    </div>
+        <ChatInput />
+      </div>
+    </ChatContextProvider>
   );
 };
 
