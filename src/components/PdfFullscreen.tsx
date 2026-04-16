@@ -1,5 +1,5 @@
 import { Expand, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Document, Page } from "react-pdf";
 import { useResizeDetector } from "react-resize-detector";
 import { toast } from "sonner";
@@ -7,13 +7,12 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "./ui/dialog";
 
 interface PdfFullscreenProps {
-  fileUrl: String;
+  fileUrl: string;
 }
 
 const PdfFullscreen = ({ fileUrl }: PdfFullscreenProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>();
-  const resizeTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const { width, ref } = useResizeDetector();
 
