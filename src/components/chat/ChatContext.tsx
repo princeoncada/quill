@@ -1,5 +1,8 @@
+import { trpc } from "@/app/_trpc/client";
+import { INFINITE_QUERY_LIMIT } from "@/config/infinite-query";
 import { useMutation } from "@tanstack/react-query";
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type StreamResponse = {
   addMessage: () => void,
@@ -22,7 +25,11 @@ interface Props {
 
 export const ChatContextProvider = ({ fileId, children }: Props) => {
   const [message, setMessage] = useState<string>('');
-  const [isLoading, setIdLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const utils = trpc.useUtils();
+
+  const backupMessage = useRef('');
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: async ({ message }: { message: string; }) => {
@@ -39,12 +46,162 @@ export const ChatContextProvider = ({ fileId, children }: Props) => {
       }
 
       return response.body;
+    },
+    onMutate: async ({ message }) => {
+      backupMessage.current = message;
+      setMessage('');
+
+      await utils.getFileMessages.cancel();
+
+      const previousMessages = utils.getFileMessages.getInfiniteData();
+
+      utils.getFileMessages.setInfiniteData({
+        fileId, limit: INFINITE_QUERY_LIMIT,
+      },
+        (old) => {
+          if (!old) {
+            return {
+              pages: [],
+              pageParams: []
+            };
+          }
+
+          const newPages = [...old.pages];
+          const latestPage = newPages[0]!;
+          latestPage.messages = [
+            {
+              createdAt: new Date().toISOString(),
+              id: crypto.randomUUID(),
+              text: message,
+              isUserMessage: true
+            },
+            ...latestPage.messages
+          ];
+
+          newPages[0] = latestPage;
+
+          return {
+            ...old,
+            pages: newPages
+          };
+        }
+      );
+
+      setIsLoading(true);
+
+      return {
+        previousMessages: previousMessages?.pages.flatMap((page) =>
+          page.messages
+        ) ?? []
+      };
+    },
+    onSuccess: async (stream) => {
+      setIsLoading(false);
+
+      if (!stream) {
+        setIsLoading(false);
+
+        return toast.error("There was a problem sending this message", {
+          description: "Please refresh this page and try again"
+        });
+      }
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let accResponse = '';
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+
+        if (value) {
+          accResponse += decoder.decode(value, { stream: !doneReading });
+
+          utils.getFileMessages.setInfiniteData({
+            fileId,
+            limit: INFINITE_QUERY_LIMIT
+          }, (old) => {
+            if (!old) {
+              return {
+                pages: [
+                  {
+                    messages: [
+                      {
+                        createdAt: new Date().toISOString(),
+                        id: "ai-response",
+                        text: accResponse,
+                        isUserMessage: false,
+                      }
+                    ],
+                    nextCursor: undefined,
+                  }
+                ],
+                pageParams: [],
+              };
+            }
+
+            const isAiResponseCreated = old.pages.some((page) =>
+              page.messages.some((message) =>
+                message.id === "ai-response"
+              )
+            );
+
+            const updatedPages = old.pages.map((page, pageIndex) => {
+              if (pageIndex !== 0) return page;
+
+              if (!isAiResponseCreated) {
+                return {
+                  ...page,
+                  messages: [
+                    {
+                      createdAt: new Date().toISOString(),
+                      id: "ai-response",
+                      text: accResponse,
+                      isUserMessage: false
+                    },
+                    ...page.messages,
+                  ]
+                };
+              }
+
+              return {
+                ...page,
+                messages: page.messages.map((message) =>
+                  message.id === "ai-response"
+                    ? { ...message, text: accResponse }
+                    : message
+                )
+              };
+            });
+
+            return {
+              ...old,
+              pages: updatedPages
+            };
+          });
+
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    },
+    onError: (_, __, context) => {
+      setMessage(backupMessage.current);
+      utils.getFileMessages.setData(
+        { fileId },
+        { messages: context?.previousMessages ?? [] }
+      );
+    },
+    onSettled: async () => {
+      setIsLoading(false);
+
+      await utils.getFileMessages.invalidate({ fileId });
     }
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value)
-  }
+    setMessage(e.target.value);
+  };
 
   const addMessage = () => sendMessage({ message });
 
