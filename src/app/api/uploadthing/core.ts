@@ -24,7 +24,7 @@ async function indexPdfDocuments(args: {
     model: "text-embedding-3-small"
   })
 
-  const texts = docs.map((doc, i) => {
+  const texts = docs.map((doc) => {
     const text = doc.pageContent?.trim() || ""
     return text
   })
@@ -55,7 +55,7 @@ export const ourFileRouter = {
       maxFileCount: 1,
     },
   })
-    .middleware(async ({ req }) => {
+    .middleware(async () => {
       const { getUser } = getKindeServerSession();
       const user = await getUser()
       if (!user || !user.id) throw new TRPCError({ code: "UNAUTHORIZED" })
@@ -101,8 +101,7 @@ export const ourFileRouter = {
           },
         })
 
-      } catch (error) {
-
+      } catch (err) {
         await db.file.update({
           data: {
             uploadStatus: "FAILED",
@@ -111,6 +110,7 @@ export const ourFileRouter = {
             id: createdFile.id,
           },
         })
+        console.error(err)
       }
     }),
 } satisfies FileRouter;
