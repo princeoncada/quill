@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDown, ChevronUp, Loader2, RotateCw, Search } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { toast } from "sonner";
@@ -26,11 +28,37 @@ interface PdfRendererProps {
 
 const PdfRenderer = ({ url }: PdfRendererProps) => {
 
+  const { width, ref } = useResizeDetector({
+    refreshMode: "debounce",
+    refreshRate: 120
+  });
+
   const [numPages, setNumPages] = useState<number>();
   const [currPage, setCurrPage] = useState<number>(1);
   const [scale, setScale] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
   const [renderedScale, setRenderedScale] = useState<number | null>(null);
+  const [stableWidth, setStableWidth] = useState<number>(1);
+  const resizeTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!width) return;
+
+    if (resizeTimeout.current) {
+      clearTimeout(resizeTimeout.current);
+    }
+
+    resizeTimeout.current = setTimeout(() => {
+      setStableWidth(width);
+    }, 100);
+
+    return () => {
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
+    };
+  }, [width]);
+
 
   const isLoading = renderedScale !== scale;
 
@@ -46,8 +74,6 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     },
     resolver: zodResolver(CustomPageValidator)
   });
-
-  const { width, ref } = useResizeDetector();
 
   const handlePageSubmit = ({ page }: TCustomPageValidator) => {
     setCurrPage(Number(page));
@@ -142,7 +168,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
               className='max-h-full'>
               {isLoading && renderedScale ?
                 <Page
-                  width={width ? width : 1}
+                  width={stableWidth}
                   pageNumber={currPage}
                   scale={scale}
                   rotate={rotation}
@@ -151,16 +177,19 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
               }
               <Page
                 className={cn(isLoading ? "hidden" : "")}
-                width={width ? width : 1}
+                width={stableWidth}
                 pageNumber={currPage}
                 scale={scale}
                 rotate={rotation}
                 key={"@" + scale}
                 loading={
                   <div className="flex justify-center">
-                    <Loader2 className="my-24 h-6 w-6 animate-spin"/>
+                    <Loader2 className="my-24 h-6 w-6 animate-spin" />
                   </div>
                 }
+                onRenderSuccess={() => {
+                  setRenderedScale(scale)
+                }}
               />
             </Document>
           </div>
