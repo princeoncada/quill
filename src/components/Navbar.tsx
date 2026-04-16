@@ -36,7 +36,7 @@ const Navbar = () => {
                 className={
                   buttonVariants({
                     size: "lg",
-                    className: "bg-blue-600! hover:bg-blue-500!"
+                    className: "bg-blue-600! hover:bg-blue-700!"
                   })}>
                 Get Started <ArrowRight className="ml-1.5 h-5 w-5"></ArrowRight>
               </RegisterLink>
