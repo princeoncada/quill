@@ -4,6 +4,7 @@ import { buttonVariants } from "./ui/button";
 import { getKindeServerSession, LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs/server";
 import { ArrowRight } from "lucide-react";
 import UserAccountNav from "./UserAccountNav";
+import MobileNav from "./MobileNav";
 
 const Navbar = async () => {
 
@@ -20,7 +21,7 @@ const Navbar = async () => {
             <span>quill.</span>
           </Link>
 
-          {/* todo: add mobile navbar */}
+          <MobileNav isAuth={!!user}/>
 
           <div className='hidden items-center space-x-4 sm:flex'>
             {!user ? <>
@@ -51,7 +52,7 @@ const Navbar = async () => {
               <Link className={buttonVariants({
                 variant: "ghost",
                 size: "lg",
-              })} href="/Dashboard">
+              })} href="/dashboard">
                 Dashboard
               </Link>
 
