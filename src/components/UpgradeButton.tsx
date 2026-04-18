@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { trpc } from "@/app/_trpc/client";
 
-const UpgradeButton = () => {
+const UpgradeButton = ({ isSubscribed }: { isSubscribed: boolean; }) => {
 
   const { mutate: createStripeSession } = trpc.createStripeSession.useMutation({
     onSuccess: ({ url }) => {
@@ -12,9 +12,23 @@ const UpgradeButton = () => {
     }
   });
 
+  const dashboardRedirect = () => {
+    window.location.href = "/dashboard"
+  }
+
   return (
-    <Button onClick={() => createStripeSession()} className="w-full py-6 bg-blue-600 hover:bg-blue-700 hover:cursor-pointer">
-      Upgrade now <ArrowRight className="h-5 w-5 ml-1.5" />
+    <Button onClick={isSubscribed ? () => dashboardRedirect() : () => createStripeSession()} className="w-full py-6 bg-blue-600 hover:bg-blue-700 hover:cursor-pointer">
+      {
+        isSubscribed ? (
+          <>
+            Current Plan
+          </>
+        ) : (
+          <>
+            Upgrade<ArrowRight className="h-5 w-5" />
+          </>
+        )
+      }
     </Button>
   );
 };
