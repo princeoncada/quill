@@ -3,14 +3,28 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PLANS } from "@/config/stripe";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Check, HelpCircle, Minus } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, HelpCircle, Minus } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import UpgradeButton from "@/components/UpgradeButton";
+import { getUserSubscriptionPlan } from "@/lib/stripe";
 
 const Page = async () => {
   const { getUser } = getKindeServerSession();
+  const subscriptionPlan = await getUserSubscriptionPlan();
   const user = await getUser();
+
+  const freePlanHref = !user
+    ? "/sign-up"
+    : user && !subscriptionPlan.isSubscribed
+      ? "/dashboard"
+      : "/dashboard/billing";
+
+  const freePlanLabel = !user
+    ? <>Sign Up<ArrowRight className='h-5 w-5' /></>
+    : user && !subscriptionPlan.isSubscribed
+      ? "Current Plan"
+      : <>Downgrade<ArrowDown className='h-5 w-5' /></>;
 
   const pricingItems = [
     {
@@ -88,7 +102,7 @@ const Page = async () => {
                 "border-2 border-blue-600 shadow-blue-200": plan === "Pro",
                 "border border-gray-200": plan !== "Pro"
               })}>
-                {plan === "Pro" && (
+                {(plan === "Pro" && !subscriptionPlan.isSubscribed) && (
                   <div className="absolute -top-5 left-0 right-0 mx-auto w-32 rounded-full bg-linear-to-r from-blue-600 to-cyan-600 px-3 py-2 text-sm font-medium text-white">
                     Upgrade now
                   </div>
@@ -154,25 +168,24 @@ const Page = async () => {
                   {plan === 'Free' ? (
                     <Link
                       href={
-                        user ? '/dashboard' : '/sign-in'
+                        freePlanHref
                       }
                       className={buttonVariants({
                         className: 'w-full py-6',
                         variant: 'secondary',
                       })}>
-                      {user ? 'Upgrade now' : 'Sign up'}
-                      <ArrowRight className='h-5 w-5 ml-1.5' />
+                      {freePlanLabel}
                     </Link>
                   ) : user ? (
-                    <UpgradeButton />
+                    <UpgradeButton isSubscribed={subscriptionPlan.isSubscribed} />
                   ) : (
                     <Link
-                      href='/sign-in'
+                      href='/sign-up'
                       className={buttonVariants({
-                        className: 'w-full py-6',
+                        className: 'w-full py-6 bg-blue-600! hover:bg-blue-700! ',
                       })}>
-                      {user ? 'Upgrade now' : 'Sign up'}
-                      <ArrowRight className='h-5 w-5 ml-1.5' />
+                      {user && !subscriptionPlan.isSubscribed ? 'Upgrade' : 'Sign Up'}
+                      <ArrowRight className='h-5 w-5' />
                     </Link>
                   )}
                 </div>
