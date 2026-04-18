@@ -37,7 +37,7 @@ const UserAccountNav = async ({ email, imageUrl, name }: UserAccountNavProps) =>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-white w-40 p-1" align="end">
         <div className="flex items-center justify-start gap-2 p-2">
-          <div className="flex flex-col space-y-0.5 leading-none">
+          <div className="flex flex-col space-y-0.5 leading-none min-w-0">
             {name && <p className="font-medium text-sm text-black">{name}</p>}
             {
               email && (
@@ -56,7 +56,7 @@ const UserAccountNav = async ({ email, imageUrl, name }: UserAccountNavProps) =>
         <DropdownMenuItem asChild>
           {
             subscriptionPlan?.isSubscribed ? (
-              <Link href="/dashboard/billing">Manage Subscription</Link>
+              <Link href="/dashboard/billing">Billing</Link>
             ) : (
               <Link href="/pricing" className="not-data-[variant=destructive]:focus:**:text-blue-700">Upgrade <Gem className="text-blue-600 h-4 w-4 ml-1.5" /></Link>
             )
