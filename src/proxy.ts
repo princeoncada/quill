@@ -8,7 +8,10 @@ export default withAuth(
       "/pricing",
       "/api/auth/(.*)",
       "/api/webhooks/stripe",
-    ],
+      "/api/uploadthing",
+      "/api/uploadthing/(.*)",
+      "/api/trpc/(.*)",
+    ]
   }
 );
 
